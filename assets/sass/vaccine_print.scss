@@ -1,0 +1,42 @@
+@use 'print_a4l';
+
+@media print {
+	@page {
+	  size: A4 landscape;
+	  margin: auto;
+	}
+}
+.pagebreak {
+	overflow: auto;
+}
+.logo {
+	display: block;
+    width: 20mm;
+    margin: auto;
+}
+
+.header {
+    font-weight: bold;
+    text-align: center;
+    line-height: 1.2;
+}
+
+
+%table {
+    border: 1px solid #000000;
+}
+
+.table-content {
+    width: 100%;
+    line-height: 1.3;
+    text-align: center;
+    @extend %table;
+    th {
+        @extend %table;
+        vertical-align: middle;
+    }
+    td {
+        @extend %table;
+        padding-left: 0.2em;
+    }
+}
