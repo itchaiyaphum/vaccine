@@ -135,7 +135,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 												<li>หลักฐานการฉีดวัคซีน : 
 													<ul style="list-style-type: none;">
 														<li>
-															<?php if ($dose1_img) { ?>
+															<?php if ($dose1_status) { ?>
 															<img src="<?= base_url('storages/vaccine_status/'.$dose1_img) ?>" alt="" style="max-height: 150px; max-white: 150px;">
 															<?php } else {echo "-";} ?>
 														</li>
