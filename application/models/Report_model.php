@@ -3,205 +3,322 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class Report_model extends CI_Model
 {
-	// private $count;
-	public function majors()
-	{
-		$sql = "SELECT `id`,`major_code`,`major_name` FROM `majors` WHERE `status`=1;";
+	//get all majors items
+	private function major_items(){
+		$sql = "SELECT id, major_name FROM `majors` WHERE `status`=1;";
 		$query = $this->db->query($sql);
-		$data['majors'] = $query->result();
-		$count = new stdClass();
-		$count->all = 0;
-		$count->c2 = 0;
-		$count->c1 = 0;
-		$count->c0 = 0;
-		$count->c = 0;
-		foreach ($data['majors'] as $row) {
-			$re = $this->groups($row->id);
-			$row->count = $re['count'];
-			$row->per = $re['per'];
-
-			$count->all += $re['count']->all;
-			$count->c2 += $re['count']->c2;
-			$count->c1 += $re['count']->c1;
-			$count->c0 += $re['count']->c0;
-			$count->c += $re['count']->c;
-		}
-		$data['count'] = $count;
-		$data['per'] = $this->percent($count);
-
-		return $data;
+		return $query->result();
 	}
-	public function groups($major_id)
+	//get all minors items
+	private function minor_items(){
+		$sql = "SELECT * FROM `minors` WHERE `status`=1;";
+		$query = $this->db->query($sql);
+		return $query->result();
+	}
+	//get all groups items
+	private function group_items(){
+		$sql = "SELECT * FROM `groups` WHERE `status`=1;";
+		$query = $this->db->query($sql);
+		return $query->result();
+	}
+	//get all students items
+	private function student_items(){
+		$sql = "SELECT id, user_id, firstname, lastname, student_id, 
+						college_id, major_id, minor_id, group_id, email, status 
+					FROM `users_student` WHERE `status`=1;";
+		$query = $this->db->query($sql);
+		return $query->result();
+	}
+	//get all vaccine status
+	private function vaccine_status_items(){
+		$sql = "SELECT id, user_id, time,date,img,vaccine_brand FROM `vaccine_status` ";
+		$query = $this->db->query($sql);
+		return $query->result();
+	}
+	//get all no vaccine status
+	private function no_vaccine_status_items(){
+		$sql = "SELECT id, user_id,cause FROM `not_vaccine` ";
+		$query = $this->db->query($sql);
+		return $query->result();
+	}
+
+	public function get_items()
 	{
-		$sql_info = "SELECT 
-		`majors`.`major_code`,`majors`.`major_name`
-		FROM `majors` WHERE `status`=1 AND `id`=?";
-		$qr_info = $this->db->query($sql_info, $major_id);
-		$data['info'] = $qr_info->row();
+		//get all all majors items
+		$major_items = $this->major_items();
 		
-		$sql = "SELECT `groups`.`id`,`groups`.`group_code`,`groups`.`group_name`, `minors`.`minor_name`
-		FROM `groups` 
-		LEFT JOIN `minors` ON `minors`.`id`=`groups`.`minor_id`
-		WHERE `groups`.`major_id`=? AND `groups`.`status`!=-1
-		ORDER BY `groups`.`group_name` ASC;";
-		$query = $this->db->query($sql, $major_id);
-		$data['groups'] = $query->result();
-		$count = new stdClass();
-		$count->all = 0;
-		$count->c2 = 0;
-		$count->c1 = 0;
-		$count->c0 = 0;
-		$count->c = 0;
-		foreach ($data['groups'] as $row) {
-			$re = $this->std($row->id);
-
-			$row->count = $re['count'];
-			$row->per = $re['per'];
-
-			$count->all += $re['count']->all;
-			$count->c2 += $re['count']->c2;
-			$count->c1 += $re['count']->c1;
-			$count->c0 += $re['count']->c0;
-			$count->c += $re['count']->c;
-		}
-		$data['count'] = $count;
-		$data['per'] = $this->percent($count);
-
-		return $data;
-	}
-
-	public function std($group_id)
-	{	$sql_info = "SELECT 
-		`groups`.`group_code`,`groups`.`group_name`
-		,`majors`.`major_code`,`majors`.`major_name`
-		,`minors`.`minor_code`,`minors`.`minor_name`
-		FROM `groups` 
-		LEFT JOIN `majors` ON `majors`.`id`=`groups`.`major_id`
-		LEFT JOIN `minors` ON `minors`.`id`=`groups`.`minor_id`
-		WHERE `groups`.`id`=? AND`groups`.`status`=1;";
-		$qr_info = $this->db->query($sql_info, $group_id);
-		$data['info'] = $qr_info->row();
-
-		$sql = "SELECT `user_id`,`firstname`,`lastname`,`student_id`
-		FROM `users_student` 
-		WHERE `users_student` .`group_id`=? AND `users_student` .`status`=1  
-		ORDER BY `users_student`.`student_id` ASC;";
-		$query = $this->db->query($sql, $group_id);
-		$data['std'] = $query->result();
+		//get all all minors items
+		$minor_items = $this->minor_items();
 		
-		$count = new stdClass();
-		$count->all = 0;
-		$count->c2 = 0;
-		$count->c1 = 0;
-		$count->c0 = 0;
-		$count->c = 0;
-		foreach ($data['std'] as $std) {
-			$sql_vaccine_status = "SELECT * FROM `vaccine_status` WHERE `user_id`=?";
-			$query_vaccine_status = $this->db->query($sql_vaccine_status, $std->user_id);
-			$vaccine_status = $query_vaccine_status->result();
-			foreach ($vaccine_status as $vacc_status) {
-				if ($vacc_status->time === '1') {
-					$std->time1 = $vacc_status;
-				} elseif ($vacc_status->time === '2') {
-					$std->time2 = $vacc_status;
+		//get all all groups items
+		$group_items = $this->group_items();
+		
+		//get all all students items
+		$student_items = $this->student_items();
+
+		//get all all vaccine status
+		$vaccine_status_items = $this->vaccine_status_items();
+
+		//get all all vaccine status
+		$no_vaccine_status_items = $this->no_vaccine_status_items();
+
+
+		// create unique key arrays for direct access by unique key for performance optimization
+		$vaccine_stats = array();
+		foreach ($vaccine_status_items as $vaccine_status) {
+			$key = $vaccine_status->user_id;
+			if(!isset($vaccine_stats[$key])){
+				$vaccine_stats[$key] = array();
+			}
+			$item_vaccine = new stdClass();
+            $item_vaccine->vaccine_id        	= $vaccine_status->id;
+            $item_vaccine->user_id             	= $vaccine_status->user_id;
+            $item_vaccine->time             	= $vaccine_status->time;
+            $item_vaccine->date             	= $vaccine_status->date;
+            $item_vaccine->img             		= $vaccine_status->img;
+            $item_vaccine->vaccine_brand        = $vaccine_status->vaccine_brand;
+
+			array_push($vaccine_stats[$key], $item_vaccine);
+		}
+		$no_vaccine_stats = array();
+		foreach ($no_vaccine_status_items as $no_vaccine_status) {
+			$key = $no_vaccine_status->user_id;
+			if(!isset($no_vaccine_stats[$key])){
+				$no_vaccine_stats[$key] = array();
+			}
+			$item_no_vaccine = new stdClass();
+            $item_no_vaccine->vaccine_id        	= $no_vaccine_status->id;
+            $item_no_vaccine->user_id             	= $no_vaccine_status->user_id;
+            $item_no_vaccine->cause             	= $no_vaccine_status->cause;
+
+			array_push($no_vaccine_stats[$key], $item_no_vaccine);
+		}
+
+
+		$items = array();
+
+		$item_majors_stats 						= new stdClass();
+		$item_majors_stats->no_vaccine       	= 0;
+		$item_majors_stats->dose1            	= 0;
+		$item_majors_stats->dose2            	= 0;
+		$item_majors_stats->dose3            	= 0;
+		$item_majors_stats->no_data       		= 0;
+		$items['major_stats']             		= $item_majors_stats;
+
+		$items['major_items'] 					= array();
+
+		foreach ($major_items as $major) {
+            $item_major 							= new stdClass();
+            $item_major->major_id               	= $major->id;
+            $item_major->major_name             	= $major->major_name;
+
+			$item_major_stats             			= new stdClass();
+			$item_major_stats->no_vaccine       	= 0;
+			$item_major_stats->dose1           	 	= 0;
+			$item_major_stats->dose2            	= 0;
+			$item_major_stats->dose3            	= 0;
+			$item_major_stats->no_data       		= 0;
+			$item_major->stats             			= $item_major_stats;
+
+			$item_major->minors           			= array();
+			$item_minors_stats 						= new stdClass();
+			$item_minors_stats->no_vaccine       	= 0;
+			$item_minors_stats->dose1            	= 0;
+			$item_minors_stats->dose2            	= 0;
+			$item_minors_stats->dose3            	= 0;
+			$item_minors_stats->no_data       		= 0;
+			$item_major->minors['minor_stats']		= $item_minors_stats;
+			$item_major->minors['minor_items']		= array();
+
+			foreach ($minor_items as $minor) {
+				if ($minor->major_id==$major->id) {
+					$item_minor                 			= new stdClass();
+					$item_minor->major_id       			= $minor->major_id;
+					$item_minor->major_name       			= $major->major_name;
+					$item_minor->minor_id       			= $minor->id;
+					$item_minor->minor_name     			= $minor->minor_name;
+
+					$item_minor_stats             			= new stdClass();
+					$item_minor_stats->no_vaccine       	= 0;
+					$item_minor_stats->dose1            	= 0;
+					$item_minor_stats->dose2            	= 0;
+					$item_minor_stats->dose3            	= 0;
+					$item_minor_stats->no_data       		= 0;
+					$item_minor->stats            			= $item_minor_stats;
+
+					$item_minor->groups         			= array();
+					$item_groups_stats 						= new stdClass();
+					$item_groups_stats->no_vaccine       	= 0;
+					$item_groups_stats->dose1            	= 0;
+					$item_groups_stats->dose2            	= 0;
+					$item_groups_stats->dose3            	= 0;
+					$item_groups_stats->no_data       		= 0;
+					$item_minor->groups['group_stats']		= $item_groups_stats;
+					$item_minor->groups['group_items']		= array();
+
+					foreach ($group_items as $group) {
+						if ($group->major_id==$major->id && $group->minor_id==$minor->id) {
+							$item_group                     = new stdClass();
+							$item_group->major_id           = $group->major_id;
+							$item_group->major_name         = $major->major_name;
+							$item_group->minor_id           = $group->minor_id;
+							$item_group->minor_name         = $minor->minor_name;
+							$item_group->group_id           = $group->id;
+							$item_group->group_name         = $group->group_name;
+
+							$item_group_stats             		= new stdClass();
+							$item_group_stats->no_vaccine       = 0;
+							$item_group_stats->dose1            = 0;
+							$item_group_stats->dose2            = 0;
+							$item_group_stats->dose3            = 0;
+							$item_group_stats->no_data       	= 0;
+							$item_group->stats            		= $item_group_stats;
+
+							$item_group->students         	= array();
+							foreach ($student_items as $student) {
+								if ($student->major_id==$major->id && $student->minor_id==$minor->id && $student->group_id==$group->id) {
+									$item_student                		= new stdClass();
+									$item_student->id           		= $student->id;
+									$item_student->user_id       		= $student->user_id;
+									$item_student->student_id   		= $student->student_id;
+									$item_student->firstname   			= $student->firstname;
+									$item_student->lastname   			= $student->lastname;
+									$item_student->email   				= $student->email;
+
+									$item_student->vaccine_status			= 0;
+									$item_student->vaccine_status_remark	= null;
+									$item_student->vaccine_status_items		= array();
+
+									// if no vaccine
+									if(isset($no_vaccine_stats[$item_student->user_id])){
+										$item_student->vaccine_status			= 0;
+										$item_student->vaccine_status_remark	= (count($no_vaccine_stats[$item_student->user_id]))?$no_vaccine_stats[$item_student->user_id][0]:null;
+										//calculate stats
+										$item_major_stats->no_vaccine++;
+										$item_minor_stats->no_vaccine++;
+										$item_group_stats->no_vaccine++;
+
+									//if has vaccine already
+									}else if(isset($vaccine_stats[$item_student->user_id])){
+										$item_student->vaccine_status		= 1;
+										$item_student->vaccine_status_items	= $vaccine_stats[$item_student->user_id];
+										//calculate stats
+										$tmps_vaccine_stats = $vaccine_stats[$item_student->user_id];
+										foreach ($tmps_vaccine_stats as $tmp_vaccine_stats) {
+											if($tmp_vaccine_stats->time=="1"){
+												$item_major_stats->dose1++;
+												$item_minor_stats->dose1++;
+												$item_group_stats->dose1++;
+											}else if($tmp_vaccine_stats->time=="2"){
+												$item_major_stats->dose2++;
+												$item_minor_stats->dose2++;
+												$item_group_stats->dose2++;
+											}else if($tmp_vaccine_stats->time=="3"){
+												$item_major_stats->dose3++;
+												$item_minor_stats->dose3++;
+												$item_group_stats->dose3++;
+											}
+										}
+
+									// no vaccine data
+									}else{
+										$item_student->vaccine_status	= (-1);
+										//calculate stats
+										$item_major_stats->no_data++;
+										$item_minor_stats->no_data++;
+										$item_group_stats->no_data++;
+									}
+
+									array_push($item_group->students, $item_student);
+								}
+							}
+							array_push($item_minor->groups['group_items'], $item_group);
+							//calculate stats of all groups
+							$item_minor->groups['group_stats']->no_vaccine 		+= $item_group->stats->no_vaccine;
+							$item_minor->groups['group_stats']->dose1        	+= $item_group->stats->dose1;
+							$item_minor->groups['group_stats']->dose2        	+= $item_group->stats->dose2;
+							$item_minor->groups['group_stats']->dose3        	+= $item_group->stats->dose3;
+							$item_minor->groups['group_stats']->no_data      	+= $item_group->stats->no_data;
+						}
+					}
+					array_push($item_major->minors['minor_items'], $item_minor);
+					//calculate stats of all minors
+					$item_major->minors['minor_stats']->no_vaccine 		+= $item_minor->stats->no_vaccine;
+					$item_major->minors['minor_stats']->dose1        	+= $item_minor->stats->dose1;
+					$item_major->minors['minor_stats']->dose2        	+= $item_minor->stats->dose2;
+					$item_major->minors['minor_stats']->dose3        	+= $item_minor->stats->dose3;
+					$item_major->minors['minor_stats']->no_data      	+= $item_minor->stats->no_data;
 				}
 			}
-			$sql_not_vacc = "SELECT * FROM `not_vaccine` WHERE `user_id`=?";
-			$query_not_vacc = $this->db->query($sql_not_vacc, $std->user_id);
-			$std->not_vaccine = $query_not_vacc->row();
+			array_push($items['major_items'], $item_major);
+			//calculate stats of all majors
+			$items['major_stats']->no_vaccine 	+= $item_major->stats->no_vaccine;
+			$items['major_stats']->dose1        += $item_major->stats->dose1;
+			$items['major_stats']->dose2        += $item_major->stats->dose2;
+			$items['major_stats']->dose3        += $item_major->stats->dose3;
+			$items['major_stats']->no_data      += $item_major->stats->no_data;
+		}
 
-			$count->all++;
-			if (isset($std->time1)) {
-				$std->vaccinated = true;
-				$count->c1++;
-				$std->time1re = "1";
-				if (isset($std->time2)) {
-					$count->c2++;
-					$std->time2re = "1";
-				} else {
-					$std->time2re = "0";
-				}
-			} elseif (isset($std->not_vaccine)) {
-				$std->vaccinated = false;
-				$std->time1re = "0";
-				$std->time2re = "0";
-				$count->c0++;
-			} else {
-				$std->vaccinated = null;
-				$std->time1re = "-";
-				$std->time2re = "-";
-				$count->c++;
+		// echo "<pre>";
+        // print_r($items);
+        // exit();
+        
+		return $items;
+	}
+
+	public function majors(){
+		return $this->get_items();
+	}
+
+	public function major($major_id)
+	{
+		$items = $this->get_items();
+		$data = null;
+		foreach($items['major_items'] as $major){
+			if($major->major_id==$major_id){
+				// echo "<pre>";
+				// print_r($major);
+				// exit();
+				return $major;
 			}
 		}
-		$data['count'] = $count;
-		$data['per'] = $this->percent($count);
-
 		return $data;
 	}
-	
-	private function percent($count)
-	{
-		$percent = new stdClass();
-		$percent->c2 = $this->getPercent($count->c2, $count->all);
-		$percent->c1 = $this->getPercent($count->c1, $count->all);
-		$percent->c0 = $this->getPercent($count->c0, $count->all);
-		$percent->c = $this->getPercent($count->c, $count->all);
 
-		return $percent;
-	}
-	public function getPercent($value, $all)
+	public function minor($minor_id)
 	{
-		if ($all == 0) {
-			return 0;
-		} else {
-			return round($value / $all * 100, 2);
-		}
-	}
-	
-
-	public function std2($group_id)
-	{
-		$sql = "SELECT `users_student` .`id`, `users_student` .`user_id`,
-        `users_student` .`firstname`, `users_student` .`lastname`, 
-        `users_student` .`student_id`, `groups`.`group_name`, 
-        `majors`.`major_name`
-        FROM `users_student` 
-        INNER JOIN `groups`ON `groups`.`id`=`users_student`.`group_id`
-        LEFT JOIN `majors` ON `majors`.`id`=`groups`.`major_id`
-        WHERE `users_student` .`group_id`=? AND `users_student` .`status`=1  
-        ORDER BY `users_student`.`student_id` ASC;";
-		$query = $this->db->query($sql, $group_id);
-		$data['std'] = $query->result();
-		$count = (object)['all' => 0, 'c1' => 0, 'c0' => 0, 'c' => 0];
-		foreach ($data['std'] as $row) {
-			$row->vaccine = $this->vaccine($row->user_id);
-
-			$count->all++;
-			if (isset($row->vaccine->consent)) {
-				if ($row->vaccine->consent === '1') {
-					$count->c1++;
-				} elseif ($row->vaccine->consent === '0') {
-					$count->c0++;
+		$items = $this->get_items();
+		$data = null;
+		foreach($items['major_items'] as $major){
+			foreach($major->minors['minor_items'] as $minor){
+				if($minor->minor_id==$minor_id){
+					// echo "<pre>";
+					// print_r($minor);
+					// exit();
+					return $minor;
 				}
-			} else {
-				$count->c++;
 			}
 		}
-		$data['count'] = $count;
 		return $data;
 	}
-	public function vaccine($user_id)
-	{
-		$sql = "SELECT `id`,`consent` FROM `vaccine` WHERE `user_id`=?;";
-		$query = $this->db->query($sql, $user_id);
-		$data = $query->result();
-		if (!empty($data)) {
-			$data = $data[0];
-		}
-		// foreach ($data as $row) {
-		//     $row->vaccine = $this->vaccine($row->user_id);
-		// }
 
+	public function group($group_id)
+	{
+		$items = $this->get_items();
+		$data = null;
+		foreach($items['major_items'] as $major){
+			foreach($major->minors['minor_items'] as $minor){
+				foreach($minor->groups['group_items'] as $group){
+					if($group->group_id==$group_id){
+						// echo "<pre>";
+						// print_r($group);
+						// exit();
+						return $group;
+					}
+				}
+			}
+		}
 		return $data;
 	}
+
 }

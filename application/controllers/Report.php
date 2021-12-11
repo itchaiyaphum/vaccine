@@ -8,40 +8,41 @@ class Report extends CI_Controller
     {
         parent::__construct();
         $this->load->model('Report_model', 'report');
+        $this->load->helper('numbers');
     }
     public function index()
     {
         redirect(site_url('report/majors'));
-        // $data = $this->report->majors();
-        // echo '<pre>';
-        // var_dump($data);
-        // echo '</pre>';
-
     }
+
     public function majors()
     {
-        $data = $this->report->majors();
-        // echo '<pre>';
-        // var_dump($data);
-        // echo '</pre>';
+        $data = array();
+        $data['majors'] = $this->report->majors();
         $this->load->view('report/majors', $data);
     }
-    public function groups()
+
+    public function major()
     {
-        $data = $this->report->groups($this->input->get('i'));
-        // echo '<pre>';
-        // var_dump($data);
-        // echo '</pre>';
-        $this->load->view('report/groups', $data);
+        $data = array();
+        $data['major'] = $this->report->major($this->input->get('i'));
+        $this->load->view('report/major', $data);
     }
-    public function std()
+
+    public function minor()
     {
-		date_default_timezone_set('Asia/Bangkok');
+        $data = array();
+        $data['minor'] = $this->report->minor($this->input->get('i'));
+        $this->load->view('report/minor', $data);
+    }
+
+    public function group()
+    {
+        date_default_timezone_set('Asia/Bangkok');
 		$this->load->library('tothai');
-        $data = $this->report->std($this->input->get('i'));
-        // echo '<pre>';
-        // var_dump($data);
-        // echo '</pre>';
-        $this->load->view('report/std', $data);
+        $data = array();
+        $data['group'] = $this->report->group($this->input->get('i'));
+        $this->load->view('report/group', $data);
     }
+
 }

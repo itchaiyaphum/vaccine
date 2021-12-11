@@ -20,10 +20,15 @@ defined('BASEPATH') or exit('No direct script access allowed');
 <body>
 	<div class="container">
 		<h2>สรุปข้อมูลการฉีดวัคซีน วิทยาลัยเทคนิคชัยภูมิ</h2>
+		
 		<p>
-			ทั้งหมด <?= $count->all ?> คน ฉีดเข็มแรก <?= $count->c1 ?> คน ฉีดเข็มที่สอง <?= $count->c2 ?> คน ยังไม่ได้รับวัคซีน <?= $count->c0 ?> คน
-			<br>ยังไม่กรอกข้อมูล <?= $count->c ?> คน
+			ทั้งหมด <?= number_format( $majors['major_stats']->dose1+$majors['major_stats']->no_vaccine ) ?> คน 
+			/ ฉีดเข็มแรก <?= number_format($majors['major_stats']->dose1) ?> คน 
+			/ ฉีดเข็มที่สอง <?= number_format($majors['major_stats']->dose2) ?> คน 
+			/ ยังไม่ได้รับวัคซีน <?= number_format($majors['major_stats']->no_vaccine) ?> คน
+			/ ยังไม่กรอกข้อมูล <?= number_format($majors['major_stats']->no_data) ?> คน
 		</p>
+		
 		<table class="table table-hover text-center">
 			<thead>
 				<tr class="table-dark text-dark">
@@ -36,28 +41,42 @@ defined('BASEPATH') or exit('No direct script access allowed');
 				</tr>
 			</thead>
 			<tbody>
-				<?php foreach ($majors as $major) { ?>
+				<?php 
+					foreach ($majors['major_items'] as $major) { 
+						$dose1 				= $major->stats->dose1;
+						$dose2 				= $major->stats->dose2;
+						$no_vaccine 		= $major->stats->no_vaccine;
+						$no_data 			= $major->stats->no_data;
+						$total 				= $dose1+$no_vaccine+$no_data;
+				?>
 					<tr>
 						<td>
-							<a href="<?= site_url('report/groups') . '?i=' . $major->id ?>">
+							<a href="<?= site_url('report/major') . '?i=' . $major->major_id ?>">
 								<?= $major->major_name ?>
 							</a>
 						</td>
-						<td><?= $major->count->c1.' ('.$major->per->c1.'%)' ?></td>
-                        <td><?= $major->count->c2.' ('.$major->per->c2.'%)' ?></td>
-                        <td><?= $major->count->c0.' ('.$major->per->c0.'%)' ?></td>
-                        <td><?= $major->count->c.' ('.$major->per->c.'%)' ?></td>
-                        <td><?= $major->count->all ?></td>
+						<td><?= number_format($dose1).' ('.numbers_percent($dose1,$total).'%)' ?></td>
+                        <td><?= number_format($dose2).' ('.numbers_percent($dose2,$total).'%)' ?></td>
+                        <td><?= number_format($no_vaccine).' ('.numbers_percent($no_vaccine,$total).'%)' ?></td>
+                        <td><?= number_format($no_data).' ('.numbers_percent($no_data,$total).'%)' ?></td>
+                        <td><?= number_format($total) ?></td>
 					</tr>
 				<?php } ?>
 			</tbody>
 			<tfoot style="color: darkred;">
+				<?php
+					$total_dose1 = $majors['major_stats']->dose1;
+					$total_dose2 = $majors['major_stats']->dose2;
+					$total_no_vaccine = $majors['major_stats']->no_vaccine;
+					$total_no_data = $majors['major_stats']->no_data;
+					$total_all 	= $total_dose1+$total_no_vaccine+$total_no_data;
+				?>
 				<td>รวม</td>
-				<td><?= $count->c1.' ('.$per->c1.'%)' ?></td>
-                <td><?= $count->c2.' ('.$per->c2.'%)' ?></td>
-                <td><?= $count->c0.' ('.$per->c0.'%)' ?></td>
-                <td><?= $count->c.' ('.$per->c.'%)' ?></td>
-                <td><?= $count->all ?></td>
+				<td><?= number_format($total_dose1).' ('.numbers_percent($total_dose1,$total_all).'%)' ?></td>
+                <td><?= number_format($total_dose2).' ('.numbers_percent($total_dose2,$total_all).'%)' ?></td>
+                <td><?= number_format($total_no_vaccine).' ('.numbers_percent($total_no_vaccine,$total_all).'%)' ?></td>
+                <td><?= number_format($total_no_data).' ('.numbers_percent($total_no_data,$total_all).'%)' ?></td>
+                <td><?= number_format($total_all) ?></td>
 			</tfoot>
 		</table>
 		<div>
